@@ -1,4 +1,5 @@
 """Constants for the Sure Petcare component."""
+
 DOMAIN = "sureha"
 
 SPC = "spc"
@@ -27,3 +28,7 @@ ATTR_LOCK_STATE = "lock_state"
 SERVICE_PET_LOCATION = "set_pet_location"
 ATTR_PET_ID = "pet_id"
 ATTR_WHERE = "where"
+
+SERVICE_SET_PROFILE_FOR_TAG = "set_profile_for_tag"
+ATTR_TAG_ID = "tag_id"
+ATTR_PROFILE = "profile"

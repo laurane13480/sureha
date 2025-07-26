@@ -87,15 +87,12 @@ class SureDeviceTracker(CoordinatorEntity, ScannerEntity):
                     self._coordinator.data.values(),
                 )
             )
-            _LOGGER.info("device=%s", device)
             tag = next(
                 filter(lambda t: t.get("id") == pet.tag_id, device._data.get("tags")),
                 None,
             )
 
             profile: int | None = tag.get("profile")
-
-            _LOGGER.info("pet_id=%s, profile=%s", self._id, profile)
 
             attrs = {
                 "since": pet.location.since,

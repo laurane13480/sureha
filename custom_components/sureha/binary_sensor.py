@@ -1,4 +1,5 @@
 """Support for Sure PetCare Flaps/Pets binary sensors."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -42,11 +43,12 @@ async def async_setup_entry(
     spc: SurePetcareAPI = hass.data[DOMAIN][SPC]
 
     for surepy_entity in spc.coordinator.data.values():
+        # if surepy_entity.type == EntityType.PET:
+        #    entities.append(Pet(spc.coordinator, surepy_entity.id, spc))
 
-        if surepy_entity.type == EntityType.PET:
-            entities.append(Pet(spc.coordinator, surepy_entity.id, spc))
-
-        elif surepy_entity.type == EntityType.HUB and surepy_entity.raw_data().get("status", {}).get("led_mode", {}):
+        if surepy_entity.type == EntityType.HUB and surepy_entity.raw_data().get(
+            "status", {}
+        ).get("led_mode", {}):
             entities.append(Hub(spc.coordinator, surepy_entity.id, spc))
 
         # connectivity
@@ -105,11 +107,9 @@ class SurePetcareBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def device_info(self):
-
         device = {}
 
         try:
-
             model = f"{self._surepy_entity.type.name.replace('_', ' ').title()}"
             if serial := self._surepy_entity.raw_data().get("serial_number"):
                 model = f"{model} ({serial})"
@@ -165,7 +165,6 @@ class Hub(SurePetcareBinarySensor):
         online: bool = False
 
         if hub := self._coordinator.data[self._id]:
-
             self._attr_extra_state_attributes = {
                 "led_mode": int(hub.raw_data()["status"]["led_mode"]),
                 "pairing_mode": bool(hub.raw_data()["status"]["pairing_mode"]),
@@ -198,7 +197,6 @@ class Pet(SurePetcareBinarySensor):
         attrs: dict[str, Any] = {}
 
         if pet := self._coordinator.data[self._id]:
-
             attrs = {
                 "since": pet.location.since,
                 "where": pet.location.where,
@@ -240,11 +238,15 @@ class DeviceConnectivity(SurePetcareBinarySensor):
         device: SurepyDevice
         attrs: dict[str, Any] = {}
 
-        if (device := self._coordinator.data[self._id]) and (
-            state := device.raw_data().get("status", {})
-        ) and (bool(state.get("online", False))):
+        if (
+            (device := self._coordinator.data[self._id])
+            and (state := device.raw_data().get("status", {}))
+            and (bool(state.get("online", False)))
+        ):
             device_rssi = state.get("signal", {}).get("device_rssi")
-            self._attr_extra_state_attributes["device_rssi"] = f"{device_rssi:.2f}" if device_rssi else "Unknown"
+            self._attr_extra_state_attributes["device_rssi"] = (
+                f"{device_rssi:.2f}" if device_rssi else "Unknown"
+            )
             hub_rssi = state.get("signal", {}).get("hub_rssi")
             if hub_rssi is not None:
                 self._attr_extra_state_attributes["hub_rssi"] = f"{hub_rssi:.2f}"

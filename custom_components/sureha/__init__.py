@@ -1,4 +1,5 @@
 """The surepetcare integration."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -16,13 +17,15 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from surepy import Surepy
 from surepy.entities import SurepyEntity
-from surepy.enums import EntityType, Location, LockState
+from surepy.enums import EntityType, Location, LockState, TagProfile
 from surepy.exceptions import SurePetcareAuthenticationError, SurePetcareError
 import voluptuous as vol
 
 # pylint: disable=import-error
 from .const import (
     ATTR_FLAP_ID,
+    ATTR_TAG_ID,
+    ATTR_PROFILE,
     ATTR_LOCK_STATE,
     ATTR_PET_ID,
     ATTR_VOLTAGE_FULL,
@@ -31,6 +34,7 @@ from .const import (
     DOMAIN,
     SERVICE_PET_LOCATION,
     SERVICE_SET_LOCK_STATE,
+    SERVICE_SET_PROFILE_FOR_TAG,
     SPC,
     SURE_API_TIMEOUT,
     SURE_BATT_VOLTAGE_FULL,
@@ -104,7 +108,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     spc = SurePetcareAPI(hass, entry, surepy)
 
     async def async_update_data():
-
         try:
             # asyncio.TimeoutError and aiohttp.ClientError already handled
 
@@ -167,19 +170,39 @@ class SurePetcareAPI:
         # elegant functions dict to choose the right function | idea by @janiversen
         await lock_states[state.lower()](flap_id)
 
+    async def set_profile_for_tag(
+        self, flap_id: int, tag_id: int, profile: str
+    ) -> None:
+        """Update the profile of a tag."""
+
+        profileValue: TagProfile = None
+        if TagProfile.INSIDE_ONLY.name.lower() == profile:
+            profileValue = TagProfile.INSIDE_ONLY
+        elif TagProfile.INSIDE_AND_OUTSIDE.name.lower() == profile:
+            profileValue = TagProfile.INSIDE_AND_OUTSIDE
+
+        if profileValue is not None:
+            await self.surepy.sac._set_profile_for_tag(
+                device_id=flap_id, tag_id=tag_id, profile=profileValue
+            )
+
     async def async_setup(self) -> bool:
         """Set up the Sure Petcare integration."""
 
         _LOGGER.info("")
         _LOGGER.info(
-            "%s %s", " \x1b[38;2;255;26;102m·\x1b[0m" * 24, choice(CATS)  # nosec
+            "%s %s",
+            " \x1b[38;2;255;26;102m·\x1b[0m" * 24,
+            choice(CATS),  # nosec
         )
         _LOGGER.info("  🐾   meeowww..! to the SureHA integration!")
         _LOGGER.info("  🐾     code & issues: https://github.com/benleb/sureha")
         _LOGGER.info(" \x1b[38;2;255;26;102m·\x1b[0m" * 30)
         _LOGGER.info("")
 
-        await self.hass.config_entries.async_forward_entry_setups(self.config_entry, PLATFORMS)
+        await self.hass.config_entries.async_forward_entry_setups(
+            self.config_entry, PLATFORMS
+        )
 
         surepy_entities: list[SurepyEntity] = self.coordinator.data.values()
 
@@ -208,17 +231,16 @@ class SurePetcareAPI:
             """Call when setting the lock state."""
 
             try:
-
                 if (pet_id := int(call.data.get(ATTR_PET_ID))) and (
                     where := str(call.data.get(ATTR_WHERE))
                 ):
-
                     await self.set_pet_location(pet_id, Location[where.upper()])
                     await self.coordinator.async_request_refresh()
 
             except ValueError as error:
                 _LOGGER.error(
-                    "🐾 \x1b[38;2;255;26;102m·\x1b[0m arguments of wrong type: %s", error
+                    "🐾 \x1b[38;2;255;26;102m·\x1b[0m arguments of wrong type: %s",
+                    error,
                 )
 
         self.hass.services.async_register(
@@ -268,6 +290,41 @@ class SurePetcareAPI:
             SERVICE_SET_LOCK_STATE,
             handle_set_lock_state,
             schema=lock_state_service_schema,
+        )
+
+        # Set lock state for tag
+        async def handle_set_profile_for_tag(call: Any) -> None:
+            """Call when setting the lock state for tag."""
+
+            flap_id = call.data.get(ATTR_FLAP_ID)
+            tag_id = call.data.get(ATTR_TAG_ID)
+            profile = call.data.get(ATTR_PROFILE)
+
+            await self.set_profile_for_tag(flap_id, tag_id, profile)
+            await self.coordinator.async_request_refresh()
+
+        set_profile_for_tag_service_schema = vol.Schema(
+            {
+                vol.Required(ATTR_FLAP_ID): vol.All(cv.positive_int, vol.In(flap_ids)),
+                vol.Required(ATTR_TAG_ID): vol.All(cv.positive_int),
+                vol.Required(ATTR_LOCK_STATE): vol.All(
+                    cv.string,
+                    vol.Lower,
+                    vol.In(
+                        [
+                            TagProfile.INSIDE_ONLY.name.lower(),
+                            TagProfile.INSIDE_AND_OUTSIDE.name.lower(),
+                        ]
+                    ),
+                ),
+            }
+        )
+
+        self.hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_PROFILE_FOR_TAG,
+            handle_set_profile_for_tag,
+            schema=set_profile_for_tag_service_schema,
         )
 
         return True

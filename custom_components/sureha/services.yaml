@@ -33,3 +33,28 @@ set_pet_location:
       required: true
       example: "Inside"
       selector: { select: { options: ["Inside", "Outside"] } }
+set_profile_for_tag:
+  name: Set Profile for Tag
+  description: Set the profile for a specific pet (tag)
+  fields:
+    flap_id:
+      name: Flap ID
+      description: Flap ID to lock/unlock
+      required: true
+      example: "123456"
+      selector:
+        text:
+    tag_id:
+     name: Tag ID
+     description: Tag Id to set the lock state for
+     required: true
+     example: 12345
+     selector:
+      text:
+    lock_state:
+      name: Profile
+      description: New profile
+      required: true
+      selector:
+        select:
+          { options: ["inside_only", "inside_and_outside"] }
