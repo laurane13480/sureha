@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 
+from config.custom_components.sureha.binary_sensor import SurepyEntity
 from homeassistant.components.device_tracker.config_entry import ScannerEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from surepy.entities import EntityType
@@ -80,10 +81,26 @@ class SureDeviceTracker(CoordinatorEntity, ScannerEntity):
         attrs: dict[str, Any] = {}
 
         if pet := self._coordinator.data[self._id]:
+            device: SurepyEntity = next(
+                filter(
+                    lambda e: e.type in [EntityType.CAT_FLAP, EntityType.PET_FLAP],
+                    self._coordinator.data.values(),
+                )
+            )
+            _LOGGER.info("device=%s", device)
+            tag = next(
+                filter(lambda t: t.get("id") == pet.tag_id, device._data.get("tags")),
+                None,
+            )
+
+            profile: int | None = tag.get("profile")
+
+            _LOGGER.info("pet_id=%s, profile=%s", self._id, profile)
 
             attrs = {
                 "since": pet.location.since,
                 "where": pet.location.where,
+                "profile": profile,
                 **pet.raw_data(),
             }
 
