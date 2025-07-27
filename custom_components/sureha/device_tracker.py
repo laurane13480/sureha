@@ -6,9 +6,9 @@ from typing import Any
 from config.custom_components.sureha.binary_sensor import SurepyEntity
 from homeassistant.components.device_tracker.config_entry import ScannerEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from surepy.entities import EntityType
-from surepy.entities.pet import Pet as SurePet
-from surepy.enums import Location
+from surepylhn.entities import EntityType
+from surepylhn.entities.pet import Pet as SurePet
+from surepylhn.enums import Location
 
 # pylint: disable=relative-beyond-top-level
 from . import DOMAIN, SurePetcareAPI

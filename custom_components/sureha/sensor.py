@@ -20,15 +20,15 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from surepy.entities import SurepyEntity
-from surepy.entities.devices import (
+from surepylhn.entities import SurepyEntity
+from surepylhn.entities.devices import (
     Feeder as SureFeeder,
     FeederBowl as SureFeederBowl,
     Felaqua as SureFelaqua,
     Flap as SureFlap,
     SurepyDevice,
 )
-from surepy.enums import EntityType, LockState
+from surepylhn.enums import EntityType, LockState
 
 # pylint: disable=relative-beyond-top-level
 from . import SurePetcareAPI

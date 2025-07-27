@@ -11,10 +11,10 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from surepy.entities import SurepyEntity
-from surepy.entities.devices import Hub as SureHub, SurepyDevice
-from surepy.entities.pet import Pet as SurePet
-from surepy.enums import EntityType, Location
+from surepylhn.entities import SurepyEntity
+from surepylhn.entities.devices import Hub as SureHub, SurepyDevice
+from surepylhn.entities.pet import Pet as SurePet
+from surepylhn.enums import EntityType, Location
 
 # pylint: disable=relative-beyond-top-level
 from . import SurePetcareAPI

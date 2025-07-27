@@ -51,7 +51,7 @@ set_profile_for_tag:
      example: 12345
      selector:
       text:
-    lock_state:
+    profile:
       name: Profile
       description: New profile
       required: true

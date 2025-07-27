@@ -15,10 +15,10 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from surepy import Surepy
-from surepy.entities import SurepyEntity
-from surepy.enums import EntityType, Location, LockState, TagProfile
-from surepy.exceptions import SurePetcareAuthenticationError, SurePetcareError
+from surepylhn import Surepy
+from surepylhn.entities import SurepyEntity
+from surepylhn.enums import EntityType, Location, LockState, TagProfile
+from surepylhn.exceptions import SurePetcareAuthenticationError, SurePetcareError
 import voluptuous as vol
 
 # pylint: disable=import-error
@@ -175,15 +175,21 @@ class SurePetcareAPI:
     ) -> None:
         """Update the profile of a tag."""
 
-        profileValue: TagProfile = None
+        _LOGGER.info(
+            "Entering set_profile_for_tag : flap_id=%s, tag_id=%s, profile=%s",
+            flap_id,
+            tag_id,
+            profile,
+        )
+        profile_value: TagProfile = None
         if TagProfile.INSIDE_ONLY.name.lower() == profile:
-            profileValue = TagProfile.INSIDE_ONLY
+            profile_value = TagProfile.INSIDE_ONLY
         elif TagProfile.INSIDE_AND_OUTSIDE.name.lower() == profile:
-            profileValue = TagProfile.INSIDE_AND_OUTSIDE
+            profile_value = TagProfile.INSIDE_AND_OUTSIDE
 
-        if profileValue is not None:
-            await self.surepy.sac._set_profile_for_tag(
-                device_id=flap_id, tag_id=tag_id, profile=profileValue
+        if profile_value is not None:
+            await self.surepy.sac.set_profile_for_tag(
+                device_id=flap_id, tag_id=tag_id, profile=profile_value
             )
 
     async def async_setup(self) -> bool:
@@ -307,7 +313,7 @@ class SurePetcareAPI:
             {
                 vol.Required(ATTR_FLAP_ID): vol.All(cv.positive_int, vol.In(flap_ids)),
                 vol.Required(ATTR_TAG_ID): vol.All(cv.positive_int),
-                vol.Required(ATTR_LOCK_STATE): vol.All(
+                vol.Required(ATTR_PROFILE): vol.All(
                     cv.string,
                     vol.Lower,
                     vol.In(
