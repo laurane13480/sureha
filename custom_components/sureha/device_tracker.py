@@ -91,7 +91,7 @@ class SureDeviceTracker(CoordinatorEntity, ScannerEntity):
                 None,
             )
 
-            profile: int | None = tag.get("profile")
+            profile: int | None = int(tag.get("profile"))
 
             attrs = {
                 "since": pet.location.since,
